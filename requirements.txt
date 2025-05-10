@@ -1,4 +1,4 @@
-Flask
+flask
 flask-cors
 numpy
 opencv-python
