@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mango Type Detector</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f9d423, #ff4e50);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 30px 40px;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 30px;
+      margin-bottom: 25px;
+    }
+
+    .input-group {
+      flex: 1 1 300px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 12px;
+      background: #fff;
+      color: #ff4e50;
+      padding: 10px 25px;
+      font-weight: bold;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: #ffe600;
+      color: #333;
+      box-shadow: 0 0 12px #fff;
+    }
+
+    img.preview {
+      margin-top: 15px;
+      display: none;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 240px;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .output {
+      margin-top: 25px;
+      background: #2ecc71;
+      padding: 15px 20px;
+      border-radius: 10px;
+      display: none;
+      color: #fff;
+    }
+
+    .fa-upload {
+      margin-right: 8px;
+    }
+
+    @media (max-width: 600px) {
+      h2 {
+        font-size: 1.6em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>🍋 Mango Type Detector</h2>
+
+    <div class="input-row">
+      <!-- Upload from device -->
+      <div class="input-group">
+        <label><i class="fas fa-upload"></i>Upload a File</label><br>
+        <input type="file" accept="image/*" id="uploadInput"><br>
+        <img id="uploadPreview" class="preview">
+      </div>
+    </div>
+
+    <button id="submitBtn">Submit</button>
+
+    <div class="output" id="outputBox">
+      <strong>Detected Mango Types:</strong>
+      <p id="predictionResult">Alphonso, Kesar, Dasheri</p>
+    </div>
+  </div>
+
+  <script>
+    const uploadInput = document.getElementById('uploadInput');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const outputBox = document.getElementById('outputBox');
+    const predictionResult = document.getElementById('predictionResult');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    let isUploading = false;  // Prevent multiple uploads
+
+    uploadInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          uploadPreview.src = e.target.result;
+          uploadPreview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Updated submitImage function
+    submitBtn.addEventListener('click', function(event) {
+      event.preventDefault();  // Prevent page refresh
+
+      if (isUploading) {
+        alert("Already uploading, please wait.");
+        return;
+      }
+
+      const file = uploadInput.files[0];
+      if (!file) {
+        alert("Please upload an image first.");
+        return;
+      }
+
+      isUploading = true;  // Lock further uploads
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      sendToServer(formData);
+    });
+
+    function sendToServer(formData) {
+      fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        isUploading = false;  // Unlock after request
+
+        if (data && data.class) {
+          outputBox.style.display = 'block';
+          predictionResult.textContent = `Detected Mango Type: ${data.class}`;
+        } else {
+          alert("No mango type detected. Please try again.");
+        }
+      })
+      .catch(error => {
+        isUploading = false;  // Unlock after request
+        console.error('Error:', error);
+        alert("Error with prediction request.");
+      });
+    }
+  </script>
+</body>
+</html>
